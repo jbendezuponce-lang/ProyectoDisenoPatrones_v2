@@ -1,0 +1,6 @@
+projectKey=U24200571
+serverUrl=http://localhost:9000
+serverVersion=26.6.0.123539
+dashboardUrl=http://localhost:9000/dashboard?id=U24200571
+ceTaskId=ff781a57-f8e9-4cc6-8c1c-90521b6106ce
+ceTaskUrl=http://localhost:9000/api/ce/task?id=ff781a57-f8e9-4cc6-8c1c-90521b6106ce
