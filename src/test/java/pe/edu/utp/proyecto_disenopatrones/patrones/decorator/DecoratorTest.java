@@ -4,39 +4,73 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import pe.edu.utp.proyecto_disenopatrones.service.patron.decorator.DescuentoDecorator;
 import pe.edu.utp.proyecto_disenopatrones.service.patron.decorator.IgvDecorator;
-import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.ComprobanteFactory;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.Boleta;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.Factura;
 import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.IComprobante;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
+/**
+ * Pruebas del patrón DECORATOR (estructural).
+ * Valida que {@link DescuentoDecorator} e {@link IgvDecorator} agreguen
+ * comportamiento al {@link IComprobante} envuelto SIN modificar su clase
+ * original, que la descripción se delegue correctamente al objeto envuelto,
+ * y que sea posible apilar varios decoradores (composición dinámica).
+ */
 @Slf4j
 class DecoratorTest {
 
     @Test
     void debeAgregarIgvYDescuentoAlComprobante() {
-        log.info("=== TEST DECORATOR: Envolviendo una Boleta ===");
-
-        // 1. Creamos la Boleta base (100 soles)
-        IComprobante boletaBase = ComprobanteFactory.crear("BOLETA", 100.0);
-        log.info("1. Descripcion de la boleta pura: {}", boletaBase.getDescripcion());
-        log.info("2. Precio Base de la Boleta pura: S/ {}", boletaBase.calcularTotal());
-
-        // 2. La envolvemos con el Decorador de IGV (Le suma el 18%)
+        IComprobante boletaBase = new Boleta(100.0);
         IComprobante boletaConIgv = new IgvDecorator(boletaBase);
-        log.info("3. Descripcion de la boleta con igv aplicado: {}", boletaConIgv.getDescripcion());
-        log.info("4. Precio tras aplicarle el Decorador IGV (18%): S/ {}", boletaConIgv.calcularTotal());
-
-        // 3. La envolvemos con el Decorador de Descuento (Le resta 10 soles, por ejemplo)
         IComprobante boletaFinal = new DescuentoDecorator(boletaConIgv);
-        log.info("5. Descripcion de la boleta con igv aplicado y su descuento: {}", boletaFinal.getDescripcion());
-        log.info("6. Precio FINAL tras aplicarle el Decorador de Descuento: S/ {}", boletaFinal.calcularTotal());
 
-        // Validaciones internas
         assertThat(boletaBase.calcularTotal()).isEqualTo(100.0);
-        assertThat(boletaConIgv.calcularTotal()).isGreaterThan(100.0); // Comprueba que subió el precio
-        assertThat(boletaFinal.calcularTotal()).isLessThan(boletaConIgv.calcularTotal()); // Comprueba que bajó el precio
+        assertThat(boletaConIgv.calcularTotal()).isGreaterThan(100.0);
+        assertThat(boletaFinal.calcularTotal()).isLessThan(boletaConIgv.calcularTotal());
+    }
 
-        log.info("ÉXITO: Los decoradores modificaron el precio dinámicamente sin alterar la clase Boleta original.");
-        log.info("===============================================================\n");
+    @Test
+    void descuentoDecoratorDebeAplicar10PorCientoDeDescuento() {
+        IComprobante factura = new Factura(100.0);
+        IComprobante conDescuento = new DescuentoDecorator(factura);
+
+        assertThat(conDescuento.calcularTotal()).isCloseTo(90.0, within(0.001));
+    }
+
+    @Test
+    void igvDecoratorDebeAgregar18PorCientoUsandoElSingleton() {
+        IComprobante boleta = new Boleta(100.0);
+        IComprobante conIgv = new IgvDecorator(boleta);
+
+        assertThat(conIgv.calcularTotal()).isCloseTo(118.0, within(0.001));
+    }
+
+    @Test
+    void getDescripcionDebeDelegarseAlComprobanteEnvuelto() {
+        // Cubre ComprobanteDecorator.getDescripcion(), que delega al objeto envuelto
+        IComprobante factura = new Factura(100.0);
+        IComprobante decorado = new IgvDecorator(new DescuentoDecorator(factura));
+
+        assertThat(decorado.getDescripcion()).isEqualTo(factura.getDescripcion());
+    }
+
+    @Test
+    void debePermitirApilarVariosDecoradoresEnCualquierOrden() {
+        IComprobante factura = new Factura(100.0);
+        IComprobante decorado = new IgvDecorator(new DescuentoDecorator(factura));
+
+        // 100 -> 90 (descuento) -> 90 * 1.18 = 106.2 (igv)
+        assertThat(decorado.calcularTotal()).isCloseTo(106.2, within(0.001));
+    }
+
+    @Test
+    void noDebeAlterarElComprobanteOriginalEnvuelto() {
+        IComprobante facturaOriginal = new Factura(100.0);
+        new DescuentoDecorator(facturaOriginal);
+
+        assertThat(facturaOriginal.calcularTotal()).isEqualTo(100.0);
     }
 }
