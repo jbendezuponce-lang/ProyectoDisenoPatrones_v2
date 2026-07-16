@@ -1,5 +1,6 @@
 package pe.edu.utp.proyecto_disenopatrones.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.ComprobanteFactory;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+@Tag(name = "Comprobante, patron factory y dacorator", description = "Operaciones relacionadas con el procesamiento de comprobante factory y decorator")
 @RequestMapping("/api/comprobantes")
 public class ComprobanteController {
 

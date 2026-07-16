@@ -1,5 +1,6 @@
 package pe.edu.utp.proyecto_disenopatrones.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.utp.proyecto_disenopatrones.service.patron.strategy.*;
@@ -7,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+
+@Tag(name = "Pagos, patron strategy", description = "Operaciones relacionadas con el procesamiento de pagos usando Strategy")
 @RequestMapping("/api/pagos")
 public class PagoController {
 
