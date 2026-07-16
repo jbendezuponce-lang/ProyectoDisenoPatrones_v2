@@ -1,0 +1,13 @@
+pe\edu\utp\proyecto_disenopatrones\patrones\factory\ComprobanteFactoryTest.class
+pe\edu\utp\proyecto_disenopatrones\patrones\singleton\ConfiguracionEmpresaTest.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\ReporteServiceImplTest.class
+pe\edu\utp\proyecto_disenopatrones\patrones\decorator\DecoratorTest.class
+pe\edu\utp\proyecto_disenopatrones\ProyectoDisenoPatronesApplicationTests.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\PagoServiceImplTest.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\ProductoServiceImplTest.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\UsuarioServiceImplTest.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\PedidoServiceImplTest.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\ClienteServiceImplTest.class
+pe\edu\utp\proyecto_disenopatrones\patrones\strategy\StrategyTest.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\ComprobanteServiceImplTest.class
+pe\edu\utp\proyecto_disenopatrones\service\impl\InventarioServiceImplTest.class

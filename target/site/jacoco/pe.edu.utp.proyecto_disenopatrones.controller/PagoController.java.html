@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PagoController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.controller</a> &gt; <span class="el_source">PagoController.java</span></div><h1>PagoController.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.controller;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.strategy.*;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+
+@Tag(name = &quot;Pagos, patron strategy&quot;, description = &quot;Operaciones relacionadas con el procesamiento de pagos usando Strategy&quot;)
+@RequestMapping(&quot;/api/pagos&quot;)
+<span class="fc" id="L14">public class PagoController {</span>
+
+    @PostMapping(&quot;/procesar&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; procesarPagoStrategy(
+            @RequestParam Double monto,
+            @RequestParam String metodo) {
+
+        MetodoPago estrategiaPago;
+
+        // Selección dinámica de la estrategia
+<span class="nc bnc" id="L24" title="All 4 branches missed.">        switch (metodo.toUpperCase()) {</span>
+<span class="nc" id="L25">            case &quot;YAPE&quot;: estrategiaPago = new PagoYape(); break;</span>
+<span class="nc" id="L26">            case &quot;TARJETA&quot;: estrategiaPago = new PagoTarjeta(); break;</span>
+<span class="nc" id="L27">            case &quot;PLIN&quot;: estrategiaPago = new PagoPlin(); break;</span>
+<span class="nc" id="L28">            default: estrategiaPago = new PagoEfectivo(); break;</span>
+        }
+
+        // Ejecución del patrón
+<span class="nc" id="L32">        ProcesadorPago procesador = new ProcesadorPago(estrategiaPago);</span>
+<span class="nc" id="L33">        String resultado = procesador.procesar(monto);</span>
+
+<span class="nc" id="L35">        Map&lt;String, String&gt; respuesta = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L36">        respuesta.put(&quot;metodo_seleccionado&quot;, metodo);</span>
+<span class="nc" id="L37">        respuesta.put(&quot;resultado_strategy&quot;, resultado);</span>
+
+<span class="nc" id="L39">        return ResponseEntity.ok(respuesta);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

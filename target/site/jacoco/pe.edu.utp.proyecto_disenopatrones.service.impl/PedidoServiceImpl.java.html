@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PedidoServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.service.impl</a> &gt; <span class="el_source">PedidoServiceImpl.java</span></div><h1>PedidoServiceImpl.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.service.impl;
+
+import pe.edu.utp.proyecto_disenopatrones.exception.RecursoNoEncontradoException;
+import pe.edu.utp.proyecto_disenopatrones.util.FechaUtil;
+import pe.edu.utp.proyecto_disenopatrones.model.Pedido;
+import pe.edu.utp.proyecto_disenopatrones.model.DetallePedido;
+import pe.edu.utp.proyecto_disenopatrones.model.Producto;
+import pe.edu.utp.proyecto_disenopatrones.repository.PedidoRepository;
+import pe.edu.utp.proyecto_disenopatrones.repository.ProductoRepository;
+import pe.edu.utp.proyecto_disenopatrones.service.InventarioService;
+import pe.edu.utp.proyecto_disenopatrones.service.PagoService;
+import pe.edu.utp.proyecto_disenopatrones.service.ComprobanteService;
+import pe.edu.utp.proyecto_disenopatrones.service.PedidoService;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.strategy.MetodoPago;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+<span class="fc" id="L22">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+/**
+ * Implementación de {@link pe.edu.utp.proyecto_disenopatrones.service.PedidoService}.
+ * Es el orquestador principal del negocio: crea pedidos con sus detalles y,
+ * en {@link #procesarVenta}, coordina en una sola transacción los 4 patrones
+ * de diseño del proyecto:
+ * &lt;ol&gt;
+ * &lt;li&gt;&lt;b&gt;Strategy&lt;/b&gt;: recibe la estrategia de pago elegida (Yape, Tarjeta, Plin, Efectivo).&lt;/li&gt;
+ * &lt;li&gt;Valida y descuenta stock vía {@link InventarioService}.&lt;/li&gt;
+ * &lt;li&gt;Registra el pago vía {@link PagoService}.&lt;/li&gt;
+ * &lt;li&gt;&lt;b&gt;Factory Method + Decorator + Singleton&lt;/b&gt;: genera el comprobante
+ * (Boleta/Factura con descuento e IGV) vía {@link ComprobanteService}.&lt;/li&gt;
+ * &lt;/ol&gt;
+ */
+public class PedidoServiceImpl implements PedidoService {
+
+    private final PedidoRepository repository;
+    private final ProductoRepository productoRepository;
+    private final InventarioService inventarioService;
+    private final PagoService pagoService;
+    private final ComprobanteService comprobanteService;
+
+    private static final String ESTADO_PENDIENTE = &quot;PENDIENTE&quot;;
+    private static final String ESTADO_COMPLETADO = &quot;COMPLETADO&quot;;
+
+    @Override
+    @Transactional
+    public Pedido guardar(Pedido pedido) {
+<span class="fc" id="L52">        log.info(&quot;Guardando pedido inicial&quot;);</span>
+
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (pedido.getFechaPedido() == null) {</span>
+<span class="fc" id="L55">            pedido.setFechaPedido(FechaUtil.ahora());</span>
+        }
+<span class="fc" id="L57">        pedido.setEstado(ESTADO_PENDIENTE);</span>
+
+<span class="fc" id="L59">        procesarDetalles(pedido, pedido.getDetalles());</span>
+<span class="fc" id="L60">        return repository.save(pedido);</span>
+    }
+
+    /**
+     * Enlaza cada {@link DetallePedido} con su {@link Pedido} (relación
+     * bidireccional obligatoria), trae el precio real del {@link Producto}
+     * desde la BD (nunca se confía en el precio que manda el cliente) y
+     * recalcula subtotal y total. Se reutiliza tanto en {@link #guardar}
+     * como en {@link #actualizar}.
+     */
+    private void procesarDetalles(Pedido pedido, List&lt;DetallePedido&gt; detalles) {
+<span class="fc" id="L71">        double totalCalculado = 0.0;</span>
+
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (detalles != null) {</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            for (DetallePedido detalle : detalles) {</span>
+<span class="pc bpc" id="L75" title="1 of 4 branches missed.">                if (detalle.getProducto() == null || detalle.getProducto().getId() == null) {</span>
+<span class="fc" id="L76">                    throw new IllegalArgumentException(&quot;Cada detalle debe indicar el ID de un producto existente&quot;);</span>
+                }
+<span class="fc" id="L78">                Producto producto = productoRepository.findById(detalle.getProducto().getId())</span>
+<span class="pc" id="L79">                        .orElseThrow(() -&gt; new RecursoNoEncontradoException(</span>
+<span class="nc" id="L80">                                &quot;Producto con ID &quot; + detalle.getProducto().getId() + &quot; no encontrado&quot;));</span>
+
+<span class="pc bpc" id="L82" title="2 of 4 branches missed.">                if (detalle.getCantidad() == null || detalle.getCantidad() &lt;= 0) {</span>
+<span class="nc" id="L83">                    throw new IllegalArgumentException(&quot;La cantidad de cada detalle debe ser mayor a 0&quot;);</span>
+                }
+
+<span class="fc" id="L86">                detalle.setProducto(producto);</span>
+<span class="fc" id="L87">                detalle.setPrecioUnitario(producto.getPrecio());</span>
+<span class="fc" id="L88">                detalle.setSubtotal(producto.getPrecio() * detalle.getCantidad());</span>
+<span class="fc" id="L89">                detalle.setPedido(pedido); // &lt;- enlace bidireccional obligatorio</span>
+
+<span class="fc" id="L91">                totalCalculado += detalle.getSubtotal();</span>
+<span class="fc" id="L92">            }</span>
+        }
+<span class="fc" id="L94">        pedido.setTotal(totalCalculado);</span>
+<span class="fc" id="L95">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;Pedido&gt; listar() {
+<span class="nc" id="L100">        return repository.findAll();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Pedido buscarPorId(Long id) {
+<span class="nc" id="L106">        return obtenerPedidoDesdeBD(id);</span>
+    }
+
+    /**
+     * Método interno privado sin anotaciones de Spring (ni @Transactional ni @Cacheable)
+     * para evitar el &quot;Problema de Auto-Invocación de Proxies&quot; detectado por SonarQube.
+     */
+    private Pedido obtenerPedidoDesdeBD(Long id) {
+<span class="fc" id="L114">        return repository.findById(id)</span>
+<span class="pc" id="L115">                .orElseThrow(() -&gt; new RecursoNoEncontradoException(&quot;Pedido no encontrado&quot;));</span>
+    }
+
+    @Override
+    @Transactional
+    public Pedido actualizarEstado(Long id, String nuevoEstado) {
+        // Se llama al método privado para evitar romper el proxy @Transactional
+<span class="nc" id="L122">        Pedido pedido = obtenerPedidoDesdeBD(id);</span>
+<span class="nc" id="L123">        pedido.setEstado(nuevoEstado);</span>
+<span class="nc" id="L124">        return repository.save(pedido);</span>
+    }
+
+    @Override
+    @Transactional
+    public Pedido actualizar(Long id, Pedido pedidoActualizado) {
+<span class="fc" id="L130">        log.info(&quot;Actualizando pedido ID: {}&quot;, id);</span>
+        // Se llama al método privado para evitar romper el proxy @Transactional
+<span class="fc" id="L132">        Pedido existente = obtenerPedidoDesdeBD(id);</span>
+
+        // Regla de negocio: un pedido ya completado (con pago/comprobante emitido)
+        // no debe poder editarse; evita inconsistencias con lo ya facturado.
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (ESTADO_COMPLETADO.equalsIgnoreCase(existente.getEstado())) {</span>
+<span class="fc" id="L137">            throw new IllegalStateException(&quot;El pedido &quot; + id + &quot; ya fue completado y no puede modificarse&quot;);</span>
+        }
+
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (pedidoActualizado.getCliente() != null) {</span>
+<span class="nc" id="L141">            existente.setCliente(pedidoActualizado.getCliente());</span>
+        }
+
+        // Reemplaza por completo los detalles (orphanRemoval=true elimina los anteriores)
+        // y recalcula el total con precios reales de la BD.
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (pedidoActualizado.getDetalles() != null) {</span>
+<span class="fc" id="L147">            existente.getDetalles().clear();</span>
+<span class="fc" id="L148">            existente.getDetalles().addAll(pedidoActualizado.getDetalles());</span>
+<span class="fc" id="L149">            procesarDetalles(existente, existente.getDetalles());</span>
+        }
+
+<span class="fc" id="L152">        return repository.save(existente);</span>
+    }
+
+    @Override
+    @Transactional
+    public void eliminar(Long id) {
+<span class="fc" id="L158">        log.info(&quot;Eliminando pedido ID: {}&quot;, id);</span>
+        // Se llama al método privado para evitar romper el proxy @Transactional
+<span class="fc" id="L160">        Pedido pedido = obtenerPedidoDesdeBD(id);</span>
+
+        // No se permite borrar un pedido ya completado: ya tiene Pago/Comprobante
+        // asociados (FK) y borrarlo rompería la trazabilidad de la venta.
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        if (ESTADO_COMPLETADO.equalsIgnoreCase(pedido.getEstado())) {</span>
+<span class="fc" id="L165">            throw new IllegalStateException(&quot;El pedido &quot; + id + &quot; ya fue completado y no puede eliminarse&quot;);</span>
+        }
+<span class="fc" id="L167">        repository.delete(pedido);</span>
+<span class="fc" id="L168">    }</span>
+
+    @Override
+    @Transactional
+    public String procesarVenta(Long pedidoId, String tipoDocumento, MetodoPago metodoPago) {
+<span class="fc" id="L173">        log.info(&quot;Iniciando procesamiento de venta para Pedido ID: {}&quot;, pedidoId);</span>
+        // Se llama al método privado para evitar romper el proxy @Transactional
+<span class="fc" id="L175">        Pedido pedido = obtenerPedidoDesdeBD(pedidoId);</span>
+
+<span class="pc bpc" id="L177" title="1 of 4 branches missed.">        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {</span>
+<span class="fc" id="L178">            throw new IllegalStateException(&quot;El pedido &quot; + pedidoId + &quot; no tiene detalles/productos para vender&quot;);</span>
+        }
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        if (ESTADO_COMPLETADO.equalsIgnoreCase(pedido.getEstado())) {</span>
+<span class="fc" id="L181">            throw new IllegalStateException(&quot;El pedido &quot; + pedidoId + &quot; ya fue procesado anteriormente&quot;);</span>
+        }
+
+        // 1. PATRÓN STRATEGY: valida y descuenta stock por cada producto del pedido
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        for (DetallePedido detalle : pedido.getDetalles()) {</span>
+<span class="fc" id="L186">            Long idProd = detalle.getProducto().getId();</span>
+<span class="fc" id="L187">            Integer cant = detalle.getCantidad();</span>
+
+<span class="fc" id="L189">            inventarioService.validarStock(idProd, cant);</span>
+<span class="fc" id="L190">            inventarioService.descontarStock(idProd, cant);</span>
+<span class="fc" id="L191">        }</span>
+
+        // 2. PATRÓN STRATEGY: procesa el pago con el método elegido (Yape, Tarjeta, Plin, Efectivo)
+<span class="fc" id="L194">        pagoService.registrarPago(pedido, pedido.getTotal(), metodoPago.getNombre());</span>
+
+        // 3. PATRÓN FACTORY + DECORATOR: genera Boleta/Factura con IGV y/o descuento
+<span class="fc" id="L197">        comprobanteService.generarComprobante(pedido, tipoDocumento);</span>
+
+<span class="fc" id="L199">        pedido.setEstado(ESTADO_COMPLETADO);</span>
+<span class="fc" id="L200">        repository.save(pedido);</span>
+
+<span class="fc" id="L202">        return &quot;Venta procesada exitosamente con comprobante: &quot; + tipoDocumento</span>
+<span class="fc" id="L203">                + &quot; | Método de pago: &quot; + metodoPago.getNombre()</span>
+<span class="fc" id="L204">                + &quot; | Total: S/ &quot; + pedido.getTotal();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

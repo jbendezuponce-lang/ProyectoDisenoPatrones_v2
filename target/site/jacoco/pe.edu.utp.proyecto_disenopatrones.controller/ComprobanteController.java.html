@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ComprobanteController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.controller</a> &gt; <span class="el_source">ComprobanteController.java</span></div><h1>ComprobanteController.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.controller;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.ComprobanteFactory;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.IComprobante;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.decorator.IgvDecorator;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.decorator.DescuentoDecorator;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@Tag(name = &quot;Comprobante, patron factory y dacorator&quot;, description = &quot;Operaciones relacionadas con el procesamiento de comprobante factory y decorator&quot;)
+@RequestMapping(&quot;/api/comprobantes&quot;)
+<span class="fc" id="L17">public class ComprobanteController {</span>
+
+    @PostMapping(&quot;/simular-generacion&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; simularFactoryYDecorator(
+            @RequestParam String tipoDocumento,
+            @RequestParam Double montoInicial,
+            @RequestParam boolean aplicarDescuento,
+            @RequestParam boolean aplicarIgv) {
+
+        // 1. FACTORY
+<span class="nc" id="L27">        IComprobante documento = ComprobanteFactory.crear(tipoDocumento, montoInicial);</span>
+
+        // 2. DECORATORS DINÁMICOS
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        if (aplicarDescuento) {</span>
+<span class="nc" id="L31">            documento = new DescuentoDecorator(documento);</span>
+        }
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (aplicarIgv) {</span>
+<span class="nc" id="L34">            documento = new IgvDecorator(documento);</span>
+        }
+
+<span class="nc" id="L37">        Map&lt;String, Object&gt; respuesta = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L38">        respuesta.put(&quot;descripcion_final&quot;, documento.getDescripcion());</span>
+<span class="nc" id="L39">        respuesta.put(&quot;monto_final_calculado&quot;, documento.calcularTotal());</span>
+
+<span class="nc" id="L41">        return ResponseEntity.ok(respuesta);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

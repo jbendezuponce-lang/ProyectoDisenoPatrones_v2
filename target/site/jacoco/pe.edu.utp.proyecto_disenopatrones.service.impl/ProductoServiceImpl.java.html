@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductoServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.service.impl</a> &gt; <span class="el_source">ProductoServiceImpl.java</span></div><h1>ProductoServiceImpl.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.service.impl;
+
+import pe.edu.utp.proyecto_disenopatrones.exception.RecursoNoEncontradoException;
+import pe.edu.utp.proyecto_disenopatrones.model.Producto;
+import pe.edu.utp.proyecto_disenopatrones.repository.ProductoRepository;
+import pe.edu.utp.proyecto_disenopatrones.service.ProductoService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
+<span class="fc" id="L13">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+/**
+ * Implementación de {@link pe.edu.utp.proyecto_disenopatrones.service.ProductoService}.
+ * CRUD de productos del catálogo (crear, listar, buscar, eliminar) y
+ * actualización directa de stock (uso administrativo, distinto del
+ * descuento automático que hace {@link InventarioServiceImpl} durante una venta).
+ */
+public class ProductoServiceImpl implements ProductoService {
+
+    private final ProductoRepository repository;
+
+    @Override
+    @Transactional
+    public Producto guardar(Producto producto) {
+<span class="fc" id="L29">        log.info(&quot;Iniciando guardado de producto: {}&quot;, producto.getNombre());</span>
+        // Sin try/catch que enmascare el error: si la categoria_id no existe, el
+        // GlobalExceptionHandler lo traduce a un 400 claro en vez de un 500 genérico.
+<span class="fc" id="L32">        return repository.save(producto);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;Producto&gt; listar() {
+<span class="nc" id="L38">        log.info(&quot;Listando todos los productos&quot;);</span>
+<span class="nc" id="L39">        return repository.findAll();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Producto buscarPorId(Long id) {
+<span class="fc" id="L45">        log.info(&quot;Buscando producto con ID: {}&quot;, id);</span>
+<span class="nc" id="L46">        return obtenerProductoDesdeBD(id);</span>
+    }
+
+    /**
+     * Método interno sin anotaciones para evitar el problema de auto-invocación de proxies
+     * detectado por SonarQube (Call transactional methods via an injected dependency).
+     */
+    private Producto obtenerProductoDesdeBD(Long id) {
+<span class="fc" id="L54">        return repository.findById(id)</span>
+<span class="fc" id="L55">                .orElseThrow(() -&gt; new RecursoNoEncontradoException(&quot;Producto con ID &quot; + id + &quot; no encontrado&quot;));</span>
+    }
+
+    @Override
+    @Transactional
+    public Producto actualizar(Long id, Producto producto) {
+<span class="fc" id="L61">        log.info(&quot;Actualizando producto ID: {}&quot;, id);</span>
+        // Llamada al método privado en lugar de buscarPorId(id)
+<span class="fc" id="L63">        Producto existente = obtenerProductoDesdeBD(id);</span>
+
+<span class="fc" id="L65">        existente.setNombre(producto.getNombre());</span>
+<span class="fc" id="L66">        existente.setDescripcion(producto.getDescripcion());</span>
+<span class="fc" id="L67">        existente.setPrecio(producto.getPrecio());</span>
+<span class="fc" id="L68">        existente.setStock(producto.getStock());</span>
+<span class="fc" id="L69">        existente.setCategoria(producto.getCategoria());</span>
+
+<span class="fc" id="L71">        return repository.save(existente);</span>
+    }
+
+    @Override
+    @Transactional
+    public void eliminar(Long id) {
+<span class="fc" id="L77">        log.info(&quot;Eliminando producto con ID: {}&quot;, id);</span>
+        // Llamada al método privado en lugar de buscarPorId(id)
+<span class="fc" id="L79">        Producto producto = obtenerProductoDesdeBD(id);</span>
+<span class="fc" id="L80">        repository.delete(producto);</span>
+<span class="fc" id="L81">    }</span>
+
+    @Override
+    @Transactional
+    public void actualizarStock(Long id, Integer cantidad) {
+<span class="fc" id="L86">        log.info(&quot;Actualizando stock del producto {}. Nueva cantidad: {}&quot;, id, cantidad);</span>
+        // Llamada al método privado en lugar de buscarPorId(id)
+<span class="fc" id="L88">        Producto producto = obtenerProductoDesdeBD(id);</span>
+<span class="fc" id="L89">        producto.setStock(cantidad);</span>
+<span class="fc" id="L90">        repository.save(producto);</span>
+<span class="fc" id="L91">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

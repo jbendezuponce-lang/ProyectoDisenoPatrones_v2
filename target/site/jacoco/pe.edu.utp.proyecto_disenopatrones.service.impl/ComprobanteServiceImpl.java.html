@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ComprobanteServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.service.impl</a> &gt; <span class="el_source">ComprobanteServiceImpl.java</span></div><h1>ComprobanteServiceImpl.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.service.impl;
+
+import pe.edu.utp.proyecto_disenopatrones.exception.RecursoNoEncontradoException;
+import pe.edu.utp.proyecto_disenopatrones.util.FechaUtil;
+import pe.edu.utp.proyecto_disenopatrones.model.Comprobante;
+import pe.edu.utp.proyecto_disenopatrones.model.Pedido;
+import pe.edu.utp.proyecto_disenopatrones.repository.ComprobanteRepository;
+import pe.edu.utp.proyecto_disenopatrones.service.ComprobanteService;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.ComprobanteFactory;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.factory.IComprobante;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.decorator.IgvDecorator;
+import pe.edu.utp.proyecto_disenopatrones.service.patron.decorator.DescuentoDecorator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.UUID;
+
+<span class="fc" id="L19">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+/**
+ * Implementación de {@link pe.edu.utp.proyecto_disenopatrones.service.ComprobanteService}.
+ * Orquesta la emisión de comprobantes de pago combinando tres patrones de diseño:
+ * &lt;ul&gt;
+ *   &lt;li&gt;&lt;b&gt;Factory Method&lt;/b&gt;: {@code ComprobanteFactory} crea la Boleta o Factura base.&lt;/li&gt;
+ *   &lt;li&gt;&lt;b&gt;Decorator&lt;/b&gt;: {@code DescuentoDecorator} e {@code IgvDecorator} envuelven
+ *       el comprobante para sumar descuento e IGV sin modificar sus clases.&lt;/li&gt;
+ *   &lt;li&gt;&lt;b&gt;Singleton&lt;/b&gt;: el IGV se obtiene de {@code ConfiguracionEmpresa.getInstance()}
+ *       dentro del {@code IgvDecorator}.&lt;/li&gt;
+ * &lt;/ul&gt;
+ */
+public class ComprobanteServiceImpl implements ComprobanteService {
+
+    private final ComprobanteRepository repository;
+
+    @Override
+    @Transactional
+    public Comprobante generarComprobante(Pedido pedido, String tipo) {
+
+        // 1. PATRÓN FACTORY: Creamos la Boleta o Factura base
+<span class="fc" id="L42">        IComprobante documentoPatron = ComprobanteFactory.crear(tipo, pedido.getTotal());</span>
+
+        // 2. PATRÓN DECORATOR: el descuento especial solo aplica a Factura (regla de negocio),
+        // pero el IGV (vía Singleton) aplica siempre, sea Boleta o Factura.
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if (tipo.equalsIgnoreCase(&quot;FACTURA&quot;)) {</span>
+<span class="fc" id="L47">            documentoPatron = new DescuentoDecorator(documentoPatron);</span>
+        }
+<span class="fc" id="L49">        documentoPatron = new IgvDecorator(documentoPatron);</span>
+
+<span class="fc" id="L51">        log.info(&quot;Documento generado con patrones: {}&quot;, documentoPatron.getDescripcion());</span>
+
+<span class="fc" id="L53">        Comprobante comprobante = Comprobante.builder()</span>
+<span class="fc" id="L54">                .pedido(pedido)</span>
+<span class="fc" id="L55">                .tipoDocumento(tipo.toUpperCase())</span>
+<span class="fc" id="L56">                .numeroEmision(&quot;DOC-&quot; + UUID.randomUUID().toString().substring(0, 8).toUpperCase())</span>
+<span class="fc" id="L57">                .total(documentoPatron.calcularTotal()) // Usamos el total matemático calculado por el Decorator</span>
+<span class="fc" id="L58">                .fechaEmision(FechaUtil.ahora())</span>
+<span class="fc" id="L59">                .build();</span>
+<span class="fc" id="L60">        return repository.save(comprobante);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Comprobante buscarPorNumero(String numeroEmision) {
+<span class="fc" id="L66">        log.info(&quot;Buscando comprobante por número de emisión: {}&quot;, numeroEmision);</span>
+<span class="pc" id="L67">        return repository.findByNumeroEmision(numeroEmision)</span>
+<span class="pc" id="L68">                .orElseThrow(() -&gt; new RecursoNoEncontradoException(&quot;Comprobante &quot; + numeroEmision + &quot; no encontrado&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

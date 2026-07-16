@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.exception;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import pe.edu.utp.proyecto_disenopatrones.util.FechaUtil;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Captura TODAS las excepciones de la aplicación y las convierte en una
+ * respuesta JSON clara con el status HTTP correcto, en vez del error 500
+ * en blanco (Whitelabel Error Page) que mostraba Spring por defecto.
+ * Esto es lo que hacía que en Swagger los POST &quot;no funcionaran&quot;: sí se
+ * ejecutaban, pero el error real quedaba oculto.
+ */
+<span class="fc" id="L23">@Slf4j</span>
+@RestControllerAdvice
+<span class="fc" id="L25">public class GlobalExceptionHandler {</span>
+
+    private Map&lt;String, Object&gt; cuerpo(HttpStatus status, String mensaje) {
+<span class="nc" id="L28">        Map&lt;String, Object&gt; body = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L29">        body.put(&quot;timestamp&quot;, FechaUtil.ahora());</span>
+<span class="nc" id="L30">        body.put(&quot;status&quot;, status.value());</span>
+<span class="nc" id="L31">        body.put(&quot;error&quot;, status.getReasonPhrase());</span>
+<span class="nc" id="L32">        body.put(&quot;mensaje&quot;, mensaje);</span>
+<span class="nc" id="L33">        return body;</span>
+    }
+
+    // 404: el recurso (cliente, producto, pedido, etc.) no existe
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleNoEncontrado(RecursoNoEncontradoException ex) {
+<span class="nc" id="L39">        log.warn(&quot;Recurso no encontrado: {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L40">        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(cuerpo(HttpStatus.NOT_FOUND, ex.getMessage()));</span>
+    }
+
+    // 400: violación de restricciones de BD (FK inexistente, campo único duplicado, NOT NULL, etc.)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleIntegridad(DataIntegrityViolationException ex) {
+<span class="nc" id="L46">        log.warn(&quot;Violación de integridad de datos: {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L47">        String mensaje = &quot;Datos inválidos: revisa que los IDs referenciados (cliente, producto, categoria, rol, etc.) &quot;</span>
+                + &quot;existan en la base de datos y que no estés duplicando un valor único (ej. DNI, RUC, username).&quot;;
+<span class="nc" id="L49">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(cuerpo(HttpStatus.BAD_REQUEST, mensaje));</span>
+    }
+
+    // 400: JSON mal formado o de tipo incorrecto en el body
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleJsonInvalido(HttpMessageNotReadableException ex) {
+<span class="nc" id="L55">        log.warn(&quot;JSON inválido en el request: {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L56">        return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L57">                .body(cuerpo(HttpStatus.BAD_REQUEST, &quot;El cuerpo (body) enviado no es un JSON válido para este recurso.&quot;));</span>
+    }
+
+    // 400: errores de validación @Valid en DTOs
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleValidacion(MethodArgumentNotValidException ex) {
+<span class="nc" id="L63">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L64">        ex.getBindingResult().getFieldErrors().forEach(err -&gt;</span>
+<span class="nc" id="L65">                sb.append(err.getField()).append(&quot;: &quot;).append(err.getDefaultMessage()).append(&quot;. &quot;));</span>
+<span class="nc" id="L66">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(cuerpo(HttpStatus.BAD_REQUEST, sb.toString()));</span>
+    }
+
+    // 400: errores de negocio esperados (stock insuficiente, usuario ya existe, credenciales, etc.)
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class, NegocioException.class})
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleNegocio(RuntimeException ex) {
+<span class="nc" id="L72">        log.warn(&quot;Error de regla de negocio: {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L73">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(cuerpo(HttpStatus.BAD_REQUEST, ex.getMessage()));</span>
+    }
+
+    // 500: cualquier otra excepción no controlada (última red de seguridad)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleGenerico(Exception ex) {
+<span class="nc" id="L79">        log.error(&quot;Error no controlado: {}&quot;, ex.getMessage(), ex);</span>
+<span class="nc" id="L80">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L81">                .body(cuerpo(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Ocurrió un error inesperado: &quot; + ex.getMessage()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

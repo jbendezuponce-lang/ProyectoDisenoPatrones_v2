@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReporteServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.service.impl</a> &gt; <span class="el_source">ReporteServiceImpl.java</span></div><h1>ReporteServiceImpl.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.service.impl;
+
+import pe.edu.utp.proyecto_disenopatrones.service.ReporteService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+<span class="fc" id="L7">@Slf4j</span>
+@Service
+/**
+ * Implementación de {@link pe.edu.utp.proyecto_disenopatrones.service.ReporteService}.
+ * Genera reportes textuales simples (ventas diarias, stock bajo). Punto de
+ * extensión sugerido para aplicar el patrón &lt;b&gt;Builder&lt;/b&gt; a futuro si los
+ * reportes crecen en complejidad (varias secciones, formatos, filtros).
+ */
+<span class="fc" id="L15">public class ReporteServiceImpl implements ReporteService {</span>
+
+    @Override
+    public String generarReporteVentasDiarias() {
+<span class="fc" id="L19">        log.info(&quot;Generando reporte de ventas diarias...&quot;);</span>
+        // Aquí podrás aplicar tu patrón Builder en el futuro
+<span class="fc" id="L21">        return &quot;Reporte de Ventas generado con éxito.&quot;;</span>
+    }
+
+    @Override
+    public String generarReporteStockBajo() {
+<span class="fc" id="L26">        log.info(&quot;Generando reporte de stock crítico...&quot;);</span>
+<span class="fc" id="L27">        return &quot;Reporte de Inventario generado.&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

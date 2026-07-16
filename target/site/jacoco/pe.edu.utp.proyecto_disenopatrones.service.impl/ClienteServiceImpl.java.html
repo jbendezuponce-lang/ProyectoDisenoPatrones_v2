@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClienteServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.service.impl</a> &gt; <span class="el_source">ClienteServiceImpl.java</span></div><h1>ClienteServiceImpl.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.service.impl;
+
+import pe.edu.utp.proyecto_disenopatrones.exception.RecursoNoEncontradoException;
+import pe.edu.utp.proyecto_disenopatrones.model.Cliente;
+import pe.edu.utp.proyecto_disenopatrones.repository.ClienteRepository;
+import pe.edu.utp.proyecto_disenopatrones.service.ClienteService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
+<span class="fc" id="L13">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+/**
+ * Implementación de {@link pe.edu.utp.proyecto_disenopatrones.service.ClienteService}.
+ * Gestiona el alta y consulta de clientes (registro, listado, búsqueda por
+ * ID y por DNI). No aplica un patrón de diseño GoF directamente, pero es
+ * consumido por {@link PedidoServiceImpl} al crear un pedido.
+ */
+public class ClienteServiceImpl implements ClienteService {
+
+    private final ClienteRepository repository;
+
+    @Override
+    @Transactional
+    public Cliente guardar(Cliente cliente) {
+<span class="fc" id="L29">        log.info(&quot;Guardando cliente con DNI: {}&quot;, cliente.getDni());</span>
+        // No se envuelve la excepción: así el GlobalExceptionHandler puede distinguir
+        // un DNI duplicado (DataIntegrityViolationException) y dar un mensaje claro,
+        // en vez de un 500 genérico.
+<span class="fc" id="L33">        return repository.save(cliente);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;Cliente&gt; listar() {
+<span class="fc" id="L39">        log.info(&quot;Listando clientes&quot;);</span>
+<span class="fc" id="L40">        return repository.findAll();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Cliente buscarPorId(Long id) {
+<span class="fc" id="L46">        log.info(&quot;Buscando cliente por ID: {}&quot;, id);</span>
+<span class="fc" id="L47">        return obtenerClienteDesdeBD(id);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Cliente buscarPorDni(String dni) {
+<span class="fc" id="L53">        log.info(&quot;Buscando cliente por DNI: {}&quot;, dni);</span>
+<span class="fc" id="L54">        return repository.findByDni(dni)</span>
+<span class="fc" id="L55">                .orElseThrow(() -&gt; new RecursoNoEncontradoException(&quot;Cliente con DNI &quot; + dni + &quot; no encontrado&quot;));</span>
+    }
+
+    /**
+     * Método interno privado sin anotaciones (@Transactional) para evitar el
+     * &quot;Problema de Auto-Invocación de Proxies&quot; detectado por SonarQube.
+     */
+    private Cliente obtenerClienteDesdeBD(Long id) {
+<span class="fc" id="L63">        return repository.findById(id)</span>
+<span class="fc" id="L64">                .orElseThrow(() -&gt; new RecursoNoEncontradoException(&quot;Cliente no encontrado&quot;));</span>
+    }
+
+    @Override
+    @Transactional
+    public Cliente actualizar(Long id, Cliente cliente) {
+<span class="fc" id="L70">        log.info(&quot;Actualizando cliente ID: {}&quot;, id);</span>
+
+        // Se llama al método privado para evitar romper el proxy @Transactional
+<span class="fc" id="L73">        Cliente existente = obtenerClienteDesdeBD(id);</span>
+
+<span class="fc" id="L75">        existente.setNombres(cliente.getNombres());</span>
+<span class="fc" id="L76">        existente.setApellidos(cliente.getApellidos());</span>
+<span class="fc" id="L77">        existente.setDni(cliente.getDni());</span>
+<span class="fc" id="L78">        existente.setCorreo(cliente.getCorreo());</span>
+<span class="fc" id="L79">        existente.setTelefono(cliente.getTelefono());</span>
+<span class="fc" id="L80">        existente.setRuc(cliente.getRuc());</span>
+<span class="fc" id="L81">        existente.setDireccionEntrega(cliente.getDireccionEntrega());</span>
+
+<span class="fc" id="L83">        return repository.save(existente);</span>
+    }
+
+    @Override
+    @Transactional
+    public void eliminar(Long id) {
+<span class="fc" id="L89">        log.info(&quot;Eliminando cliente con ID: {}&quot;, id);</span>
+
+        // Se llama al método privado para evitar romper el proxy @Transactional
+<span class="fc" id="L92">        Cliente cliente = obtenerClienteDesdeBD(id);</span>
+<span class="fc" id="L93">        repository.delete(cliente);</span>
+<span class="fc" id="L94">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

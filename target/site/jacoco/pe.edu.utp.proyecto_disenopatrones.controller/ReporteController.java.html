@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReporteController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.controller</a> &gt; <span class="el_source">ReporteController.java</span></div><h1>ReporteController.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import pe.edu.utp.proyecto_disenopatrones.service.ReporteService;
+import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/reportes&quot;)
+@RequiredArgsConstructor
+public class ReporteController {
+
+    private final ReporteService reporteService;
+
+    @GetMapping(&quot;/ventas-diarias&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; obtenerReporteVentas() {
+<span class="nc" id="L19">        Map&lt;String, String&gt; respuesta = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L20">        respuesta.put(&quot;reporte&quot;, reporteService.generarReporteVentasDiarias());</span>
+<span class="nc" id="L21">        return ResponseEntity.ok(respuesta);</span>
+    }
+
+    @GetMapping(&quot;/stock-critico&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; obtenerReporteStock() {
+<span class="nc" id="L26">        Map&lt;String, String&gt; respuesta = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L27">        respuesta.put(&quot;reporte&quot;, reporteService.generarReporteStockBajo());</span>
+<span class="nc" id="L28">        return ResponseEntity.ok(respuesta);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

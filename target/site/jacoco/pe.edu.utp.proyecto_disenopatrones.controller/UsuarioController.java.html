@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UsuarioController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">pe.edu.utp.proyecto_disenopatrones.controller</a> &gt; <span class="el_source">UsuarioController.java</span></div><h1>UsuarioController.java</h1><pre class="source lang-java linenums">package pe.edu.utp.proyecto_disenopatrones.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import pe.edu.utp.proyecto_disenopatrones.model.Usuario;
+import pe.edu.utp.proyecto_disenopatrones.service.UsuarioService;
+import lombok.RequiredArgsConstructor;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/usuarios&quot;)
+@RequiredArgsConstructor
+@SuppressWarnings(&quot;java:S4684&quot;)
+public class UsuarioController {
+
+    private final UsuarioService usuarioService;
+
+    /**
+     * Registra un usuario nuevo.
+     * Body de ejemplo en Swagger:
+     * {@code { &quot;username&quot;: &quot;jperez&quot;, &quot;password&quot;: &quot;clave123&quot;, &quot;rol&quot;: {&quot;id&quot;: 2}, &quot;personaId&quot;: 1 } }
+     * (roles ya sembrados en data.sql: 1 = ROLE_ADMIN, 2 = ROLE_CLIENTE)
+     */
+    @PostMapping(&quot;/registro&quot;)
+    public ResponseEntity&lt;Usuario&gt; registrar(@RequestBody Usuario usuario) {
+<span class="nc" id="L30">        return ResponseEntity.ok(usuarioService.registrarUsuario(usuario));</span>
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; login(@RequestParam String username, @RequestParam String password) {
+<span class="nc" id="L35">        boolean autenticado = usuarioService.autenticar(username, password);</span>
+
+<span class="nc" id="L37">        Map&lt;String, String&gt; respuesta = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (autenticado) {</span>
+<span class="nc" id="L39">            respuesta.put(&quot;mensaje&quot;, &quot;Login exitoso. Bienvenido &quot; + username);</span>
+<span class="nc" id="L40">            return ResponseEntity.ok(respuesta);</span>
+        } else {
+<span class="nc" id="L42">            respuesta.put(&quot;error&quot;, &quot;Credenciales incorrectas&quot;);</span>
+<span class="nc" id="L43">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(respuesta);</span>
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;List&lt;Usuario&gt;&gt; listarTodos() {
+<span class="nc" id="L49">        return ResponseEntity.ok(usuarioService.listar());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
