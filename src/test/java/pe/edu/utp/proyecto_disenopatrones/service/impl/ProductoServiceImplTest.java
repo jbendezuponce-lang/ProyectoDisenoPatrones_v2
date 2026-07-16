@@ -39,6 +39,18 @@ class ProductoServiceImplTest {
     }
 
     @Test
+    void listarDebeRetornarTodosLosProductos() {
+        when(repository.findAll()).thenReturn(java.util.List.of(producto));
+        assertThat(productoService.listar()).hasSize(1).containsExactly(producto);
+    }
+
+    @Test
+    void buscarPorIdDebeRetornarElProductoCuandoExiste() {
+        when(repository.findById(1L)).thenReturn(Optional.of(producto));
+        assertThat(productoService.buscarPorId(1L)).isEqualTo(producto);
+    }
+
+    @Test
     void buscarPorIdDebeLanzarExcepcionCuandoNoExiste() {
         when(repository.findById(99L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> productoService.buscarPorId(99L))

@@ -35,6 +35,53 @@ class PedidoServiceImplTest {
     private PedidoServiceImpl pedidoService;
 
     @Test
+    void listarDebeRetornarTodosLosPedidos() {
+        Pedido pedido = Pedido.builder().id(1L).build();
+        when(repository.findAll()).thenReturn(List.of(pedido));
+
+        assertThat(pedidoService.listar()).hasSize(1).containsExactly(pedido);
+    }
+
+    @Test
+    void buscarPorIdDebeRetornarElPedidoCuandoExiste() {
+        Pedido pedido = Pedido.builder().id(1L).build();
+        when(repository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        assertThat(pedidoService.buscarPorId(1L)).isEqualTo(pedido);
+    }
+
+    @Test
+    void buscarPorIdDebeLanzarExcepcionCuandoNoExiste() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> pedidoService.buscarPorId(99L))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void actualizarEstadoDebeModificarYGuardarElNuevoEstado() {
+        Pedido pedido = Pedido.builder().id(1L).estado("PENDIENTE").build();
+        when(repository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(repository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Pedido resultado = pedidoService.actualizarEstado(1L, "CANCELADO");
+
+        assertThat(resultado.getEstado()).isEqualTo("CANCELADO");
+    }
+
+    @Test
+    void guardarSinDetallesDebeCrearUnPedidoConTotalCero() {
+        Pedido pedido = Pedido.builder().cliente(new Cliente()).build(); // sin detalles (null)
+        when(repository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Pedido resultado = pedidoService.guardar(pedido);
+
+        assertThat(resultado.getTotal()).isEqualTo(0.0);
+        assertThat(resultado.getEstado()).isEqualTo("PENDIENTE");
+        assertThat(resultado.getFechaPedido()).isNotNull();
+    }
+
+    @Test
     void guardarDebeEnlazarDetallesConElPedidoYCalcularElTotal() {
         Producto producto = Producto.builder().id(1L).nombre("Mouse").precio(50.0).stock(10).build();
         DetallePedido detalle = DetallePedido.builder()
@@ -112,6 +159,27 @@ class PedidoServiceImplTest {
 
         assertThatThrownBy(() -> pedidoService.procesarVenta(7L, "BOLETA", metodoPago))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void actualizarSoloElClienteNoDebeTocarLosDetalles() {
+        DetallePedido detalleExistente = DetallePedido.builder()
+                .cantidad(2).precioUnitario(10.0).subtotal(20.0).producto(Producto.builder().id(1L).build()).build();
+        Pedido existente = Pedido.builder().id(12L).estado("PENDIENTE")
+                .total(20.0).detalles(new ArrayList<>(List.of(detalleExistente))).build();
+
+        Cliente nuevoCliente = new Cliente();
+        nuevoCliente.setDni("87654321");
+        Pedido cambios = Pedido.builder().cliente(nuevoCliente).build(); // sin detalles
+
+        when(repository.findById(12L)).thenReturn(Optional.of(existente));
+        when(repository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Pedido resultado = pedidoService.actualizar(12L, cambios);
+
+        assertThat(resultado.getCliente()).isEqualTo(nuevoCliente);
+        assertThat(resultado.getDetalles()).hasSize(1); // no se tocaron
+        assertThat(resultado.getTotal()).isEqualTo(20.0); // no se recalculó
     }
 
     @Test

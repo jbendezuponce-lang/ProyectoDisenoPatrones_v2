@@ -91,6 +91,60 @@ class UsuarioServiceImplTest {
     }
 
     @Test
+    void registrarUsuarioDebeRechazarUsernameEnBlanco() {
+        Usuario nuevo = Usuario.builder().username("   ").password("clave123").build();
+
+        assertThatThrownBy(() -> usuarioService.registrarUsuario(nuevo))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void registrarUsuarioDebeRechazarPasswordEnBlanco() {
+        Usuario nuevo = Usuario.builder().username("valido").password("").build();
+
+        assertThatThrownBy(() -> usuarioService.registrarUsuario(nuevo))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void buscarPorUsernameDebeRetornarElUsuarioCuandoExiste() {
+        Usuario usuario = Usuario.builder().username("ana").password("1234").rol(rolCliente).build();
+        when(repository.findByUsername("ana")).thenReturn(Optional.of(usuario));
+
+        assertThat(usuarioService.buscarPorUsername("ana")).isEqualTo(usuario);
+    }
+
+    @Test
+    void buscarPorUsernameDebeLanzarExcepcionCuandoNoExiste() {
+        when(repository.findByUsername("fantasma")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> usuarioService.buscarPorUsername("fantasma"))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void listarDebeRetornarTodosLosUsuarios() {
+        Usuario usuario = Usuario.builder().username("ana").password("1234").rol(rolCliente).build();
+        when(repository.findAll()).thenReturn(java.util.List.of(usuario));
+
+        assertThat(usuarioService.listar()).hasSize(1).containsExactly(usuario);
+    }
+
+    @Test
+    void cambiarPasswordDebeActualizarLaContraseniaDelUsuario() {
+        Usuario usuario = Usuario.builder().username("ana").password("1234").rol(rolCliente).build();
+        when(repository.findByUsername("ana")).thenReturn(Optional.of(usuario));
+        when(repository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        usuarioService.cambiarPassword("ana", "nuevaClave");
+
+        assertThat(usuario.getPassword()).isEqualTo("nuevaClave");
+        verify(repository).save(usuario);
+    }
+
+    @Test
     void autenticarDebeRetornarTrueConCredencialesCorrectas() {
         Usuario usuario = Usuario.builder().username("ana").password("1234").rol(rolCliente).build();
         when(repository.findByUsername("ana")).thenReturn(Optional.of(usuario));
