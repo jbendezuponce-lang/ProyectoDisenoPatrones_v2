@@ -109,6 +109,33 @@ class UsuarioServiceImplTest {
     }
 
     @Test
+    void registrarUsuarioDebeRechazarUsernameNulo() {
+        Usuario nuevo = Usuario.builder().username(null).password("clave123").build();
+
+        assertThatThrownBy(() -> usuarioService.registrarUsuario(nuevo))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void registrarUsuarioDebeRechazarPasswordNulo() {
+        Usuario nuevo = Usuario.builder().username("valido").password(null).build();
+
+        assertThatThrownBy(() -> usuarioService.registrarUsuario(nuevo))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void registrarUsuarioDebeRechazarRolConIdNulo() {
+        // el objeto rol viene presente, pero sin id -> segunda condición del OR
+        Usuario nuevo = Usuario.builder().username("valido2").password("clave123")
+                .rol(new Rol()).build();
+        when(repository.existsByUsername("valido2")).thenReturn(false);
+
+        assertThatThrownBy(() -> usuarioService.registrarUsuario(nuevo))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void buscarPorUsernameDebeRetornarElUsuarioCuandoExiste() {
         Usuario usuario = Usuario.builder().username("ana").password("1234").rol(rolCliente).build();
         when(repository.findByUsername("ana")).thenReturn(Optional.of(usuario));

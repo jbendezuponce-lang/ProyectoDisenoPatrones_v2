@@ -70,17 +70,17 @@ public class PedidoServiceImpl implements PedidoService {
     private void procesarDetalles(Pedido pedido, List&lt;DetallePedido&gt; detalles) {
 <span class="fc" id="L71">        double totalCalculado = 0.0;</span>
 
-<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (detalles != null) {</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (detalles != null) {</span>
 <span class="fc bfc" id="L74" title="All 2 branches covered.">            for (DetallePedido detalle : detalles) {</span>
-<span class="pc bpc" id="L75" title="1 of 4 branches missed.">                if (detalle.getProducto() == null || detalle.getProducto().getId() == null) {</span>
+<span class="fc bfc" id="L75" title="All 4 branches covered.">                if (detalle.getProducto() == null || detalle.getProducto().getId() == null) {</span>
 <span class="fc" id="L76">                    throw new IllegalArgumentException(&quot;Cada detalle debe indicar el ID de un producto existente&quot;);</span>
                 }
 <span class="fc" id="L78">                Producto producto = productoRepository.findById(detalle.getProducto().getId())</span>
 <span class="pc" id="L79">                        .orElseThrow(() -&gt; new RecursoNoEncontradoException(</span>
 <span class="nc" id="L80">                                &quot;Producto con ID &quot; + detalle.getProducto().getId() + &quot; no encontrado&quot;));</span>
 
-<span class="pc bpc" id="L82" title="2 of 4 branches missed.">                if (detalle.getCantidad() == null || detalle.getCantidad() &lt;= 0) {</span>
-<span class="nc" id="L83">                    throw new IllegalArgumentException(&quot;La cantidad de cada detalle debe ser mayor a 0&quot;);</span>
+<span class="fc bfc" id="L82" title="All 4 branches covered.">                if (detalle.getCantidad() == null || detalle.getCantidad() &lt;= 0) {</span>
+<span class="fc" id="L83">                    throw new IllegalArgumentException(&quot;La cantidad de cada detalle debe ser mayor a 0&quot;);</span>
                 }
 
 <span class="fc" id="L86">                detalle.setProducto(producto);</span>
@@ -97,13 +97,13 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional(readOnly = true)
     public List&lt;Pedido&gt; listar() {
-<span class="nc" id="L100">        return repository.findAll();</span>
+<span class="fc" id="L100">        return repository.findAll();</span>
     }
 
     @Override
     @Transactional(readOnly = true)
     public Pedido buscarPorId(Long id) {
-<span class="nc" id="L106">        return obtenerPedidoDesdeBD(id);</span>
+<span class="fc" id="L106">        return obtenerPedidoDesdeBD(id);</span>
     }
 
     /**
@@ -112,16 +112,16 @@ public class PedidoServiceImpl implements PedidoService {
      */
     private Pedido obtenerPedidoDesdeBD(Long id) {
 <span class="fc" id="L114">        return repository.findById(id)</span>
-<span class="pc" id="L115">                .orElseThrow(() -&gt; new RecursoNoEncontradoException(&quot;Pedido no encontrado&quot;));</span>
+<span class="fc" id="L115">                .orElseThrow(() -&gt; new RecursoNoEncontradoException(&quot;Pedido no encontrado&quot;));</span>
     }
 
     @Override
     @Transactional
     public Pedido actualizarEstado(Long id, String nuevoEstado) {
         // Se llama al método privado para evitar romper el proxy @Transactional
-<span class="nc" id="L122">        Pedido pedido = obtenerPedidoDesdeBD(id);</span>
-<span class="nc" id="L123">        pedido.setEstado(nuevoEstado);</span>
-<span class="nc" id="L124">        return repository.save(pedido);</span>
+<span class="fc" id="L122">        Pedido pedido = obtenerPedidoDesdeBD(id);</span>
+<span class="fc" id="L123">        pedido.setEstado(nuevoEstado);</span>
+<span class="fc" id="L124">        return repository.save(pedido);</span>
     }
 
     @Override
@@ -137,13 +137,13 @@ public class PedidoServiceImpl implements PedidoService {
 <span class="fc" id="L137">            throw new IllegalStateException(&quot;El pedido &quot; + id + &quot; ya fue completado y no puede modificarse&quot;);</span>
         }
 
-<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (pedidoActualizado.getCliente() != null) {</span>
-<span class="nc" id="L141">            existente.setCliente(pedidoActualizado.getCliente());</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (pedidoActualizado.getCliente() != null) {</span>
+<span class="fc" id="L141">            existente.setCliente(pedidoActualizado.getCliente());</span>
         }
 
         // Reemplaza por completo los detalles (orphanRemoval=true elimina los anteriores)
         // y recalcula el total con precios reales de la BD.
-<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (pedidoActualizado.getDetalles() != null) {</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        if (pedidoActualizado.getDetalles() != null) {</span>
 <span class="fc" id="L147">            existente.getDetalles().clear();</span>
 <span class="fc" id="L148">            existente.getDetalles().addAll(pedidoActualizado.getDetalles());</span>
 <span class="fc" id="L149">            procesarDetalles(existente, existente.getDetalles());</span>
@@ -174,7 +174,7 @@ public class PedidoServiceImpl implements PedidoService {
         // Se llama al método privado para evitar romper el proxy @Transactional
 <span class="fc" id="L175">        Pedido pedido = obtenerPedidoDesdeBD(pedidoId);</span>
 
-<span class="pc bpc" id="L177" title="1 of 4 branches missed.">        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {</span>
+<span class="fc bfc" id="L177" title="All 4 branches covered.">        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {</span>
 <span class="fc" id="L178">            throw new IllegalStateException(&quot;El pedido &quot; + pedidoId + &quot; no tiene detalles/productos para vender&quot;);</span>
         }
 <span class="fc bfc" id="L180" title="All 2 branches covered.">        if (ESTADO_COMPLETADO.equalsIgnoreCase(pedido.getEstado())) {</span>

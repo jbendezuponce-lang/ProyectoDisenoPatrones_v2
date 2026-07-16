@@ -50,11 +50,14 @@ class DecoratorTest {
 
     @Test
     void getDescripcionDebeDelegarseAlComprobanteEnvuelto() {
-        // Cubre ComprobanteDecorator.getDescripcion(), que delega al objeto envuelto
+        // Cubre ComprobanteDecorator.getDescripcion(): cada decorador concreto
+        // llama a super.getDescripcion() (clase base) y le agrega su propio
+        // sufijo, en vez de duplicar la lógica de delegación.
         IComprobante factura = new Factura(100.0);
         IComprobante decorado = new IgvDecorator(new DescuentoDecorator(factura));
 
-        assertThat(decorado.getDescripcion()).isEqualTo(factura.getDescripcion());
+        String esperado = factura.getDescripcion() + " - Descuento Especial (10%)" + " + IGV Aplicado";
+        assertThat(decorado.getDescripcion()).isEqualTo(esperado);
     }
 
     @Test

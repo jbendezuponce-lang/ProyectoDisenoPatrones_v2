@@ -117,6 +117,47 @@ class PedidoServiceImplTest {
     }
 
     @Test
+    void guardarDebeRechazarUnDetalleConProductoSinId() {
+        // producto no es null, pero su id sí -> segunda condición del OR
+        DetallePedido detalle = DetallePedido.builder().cantidad(1).producto(new Producto()).build();
+        Pedido pedido = Pedido.builder().detalles(List.of(detalle)).build();
+
+        assertThatThrownBy(() -> pedidoService.guardar(pedido))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void guardarDebeRechazarUnDetalleConCantidadNula() {
+        DetallePedido detalle = DetallePedido.builder().producto(Producto.builder().id(1L).build()).build(); // cantidad null
+        Pedido pedido = Pedido.builder().detalles(List.of(detalle)).build();
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(Producto.builder().id(1L).precio(10.0).build()));
+
+        assertThatThrownBy(() -> pedidoService.guardar(pedido))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void guardarDebeRechazarUnDetalleConCantidadCeroONegativa() {
+        DetallePedido detalle = DetallePedido.builder().cantidad(0).producto(Producto.builder().id(1L).build()).build();
+        Pedido pedido = Pedido.builder().detalles(List.of(detalle)).build();
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(Producto.builder().id(1L).precio(10.0).build()));
+
+        assertThatThrownBy(() -> pedidoService.guardar(pedido))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void procesarVentaDebeRechazarUnPedidoConDetallesNulos() {
+        // Cubre la otra mitad del OR: detalles == null (no solo detalles vacío)
+        Pedido pedido = Pedido.builder().id(20L).estado("PENDIENTE").detalles(null).build();
+        when(repository.findById(20L)).thenReturn(Optional.of(pedido));
+        PagoYape estrategia = new PagoYape();
+
+        assertThatThrownBy(() -> pedidoService.procesarVenta(20L, "BOLETA", estrategia))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void procesarVentaDebeOrquestarInventarioPagoYComprobante() {
         Producto producto = Producto.builder().id(1L).build();
         DetallePedido detalle = DetallePedido.builder().cantidad(1).producto(producto).build();

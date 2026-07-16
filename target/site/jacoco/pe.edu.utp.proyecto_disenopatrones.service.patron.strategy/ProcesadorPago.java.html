@@ -2,24 +2,24 @@
 
 import lombok.extern.slf4j.Slf4j;
 
-<span class="nc" id="L5">@Slf4j // 1. Añadimos logs al procesador</span>
+<span class="fc" id="L5">@Slf4j // 1. Añadimos logs al procesador</span>
 public class ProcesadorPago {
 
     // Almacena la estrategia seleccionada (Yape, Tarjeta, etc.)
     private MetodoPago estrategia;
 
     // Constructor que recibe la estrategia
-<span class="nc" id="L12">    public ProcesadorPago(MetodoPago estrategia) {</span>
-<span class="nc" id="L13">        this.estrategia = estrategia;</span>
-<span class="nc" id="L14">    }</span>
+<span class="fc" id="L12">    public ProcesadorPago(MetodoPago estrategia) {</span>
+<span class="fc" id="L13">        this.estrategia = estrategia;</span>
+<span class="fc" id="L14">    }</span>
 
     // Método que ejecuta el pago sin importar qué estrategia sea
     public String procesar(Double monto) {
         // Log para ver la delegación del patrón
-<span class="nc" id="L19">        log.info(&quot;[PATRÓN STRATEGY] ProcesadorPago detecta solicitud. Delegando cobro de S/ {} a la estrategia: {}&quot;,</span>
-<span class="nc" id="L20">                monto, estrategia.getClass().getSimpleName());</span>
+<span class="fc" id="L19">        log.info(&quot;[PATRÓN STRATEGY] ProcesadorPago detecta solicitud. Delegando cobro de S/ {} a la estrategia: {}&quot;,</span>
+<span class="fc" id="L20">                monto, estrategia.getClass().getSimpleName());</span>
 
-<span class="nc" id="L22">        return estrategia.procesarPago(monto);</span>
+<span class="fc" id="L22">        return estrategia.procesarPago(monto);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

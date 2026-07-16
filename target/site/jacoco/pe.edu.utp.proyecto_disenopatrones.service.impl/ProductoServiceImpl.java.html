@@ -35,15 +35,15 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional(readOnly = true)
     public List&lt;Producto&gt; listar() {
-<span class="nc" id="L38">        log.info(&quot;Listando todos los productos&quot;);</span>
-<span class="nc" id="L39">        return repository.findAll();</span>
+<span class="fc" id="L38">        log.info(&quot;Listando todos los productos&quot;);</span>
+<span class="fc" id="L39">        return repository.findAll();</span>
     }
 
     @Override
     @Transactional(readOnly = true)
     public Producto buscarPorId(Long id) {
 <span class="fc" id="L45">        log.info(&quot;Buscando producto con ID: {}&quot;, id);</span>
-<span class="nc" id="L46">        return obtenerProductoDesdeBD(id);</span>
+<span class="fc" id="L46">        return obtenerProductoDesdeBD(id);</span>
     }
 
     /**
